@@ -1,6 +1,8 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
+var request = require("request");
+
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -38,7 +40,7 @@ exports.readListOfUrls = function(cb) {
 
 
 exports.isUrlInList = function(url, cb) {
-  exports.readListOfUrls(function(urls){
+  exports.readListOfUrls(function(urls) {
     var inList = _.contains(urls, url);
     cb(inList);
   });
@@ -50,16 +52,46 @@ exports.addUrlToList = function(url, cb) {
       exports.readListOfUrls(function(urls) {
         urls = urls.concat(url);
         fs.writeFile(exports.paths.list, urls.join('\n'), function(error) {
-          console.log("error: " + error);
+          if (error){
+            throw error;
+          }
         });
       });
     }
-    cb();
+    if (cb){
+      cb();
+    }
   });
 };
 
-exports.isUrlArchived = function() {
+exports.isUrlArchived = function(url, cb) {
+  var file = exports.paths.archivedSites + '/' + url;
+  fs.readFile(file, function(err, data){
+    var hasFile = true;
+    if (err) {
+      hasFile = false;
+    }
+    cb(hasFile);
+  });
 };
 
 exports.downloadUrls = function() {
+  exports.readListOfUrls(function(arr) {
+    _.each(arr, function(url) {
+      exports.isUrlArchived(url, function(hasFile) {
+        if (!hasFile) {
+          var file = exports.paths.archivedSites + '/' + url;
+          var website = "http://" + url;
+          request(website, function(error, res, body){
+            fs.writeFile(file, body, function(err) {
+              if (err){
+                throw err;
+              }
+            });
+            
+          })
+        }
+      });
+    });
+  });
 };

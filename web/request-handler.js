@@ -10,22 +10,38 @@ var sendResponse = function(res, data, statusCode){
   res.end(data);
 };
 
+var postPage = function(url, res) {
+  archive.addUrlToList(url);
+  archive.isUrlArchived(url, function(hasFile) {
+    if (hasFile) {
+      http_helpers.serveAssets(res, url, function(res, data) {
+        sendResponse(res, data, 201);
+      });
+    } else {
+      var file = path.join(__dirname, './public/loading.html');
+      fs.readFile(file, 'utf8', function(err, data) {
+        sendResponse(res, data);
+      })
+    }
+  });
+}
+
 var responses = {
   "GET": function(req, res) {
     // use fs to read the HTML file
     var file = path.join(__dirname, './public/index.html');
-    console.log(file);
     fs.readFile(file, 'utf8', function(err, data) {
       sendResponse(res, data);
     })
-    // pass that as data to sendResponse
-    
-    //Then send response
-    // sendResponse(res, data?);
   },
   "POST": function(req, res) {
-
-    sendResponse(res, "yessir!", 201);
+    var data = "";
+      req.on('data', function(chunk) {
+        data += chunk;
+      });
+      req.on('end', function() {
+        postPage(data.slice(4), res);
+      });
   },
   "OPTIONS": function(req, res) {
     sendResponse(res);
@@ -36,8 +52,14 @@ exports.handleRequest = function (req, res) {
   var response = responses[req.method];
   if (response) {
     response(req, res);
-    console.log(response);
   } else {
     sendResponse(res, '', 404);
   }
 };
+
+// this all happens within req.on('end')'s callback within POST
+
+// add to list
+// check if page is in archive
+  // if it is, serve it up
+  // if it's not serve wait page

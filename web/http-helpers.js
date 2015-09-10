@@ -14,6 +14,15 @@ exports.serveAssets = function(res, asset, callback) {
   // Write some code here that helps serve up your static files!
   // (Static files are things like html (yours or archived from others...),
   // css, or anything that doesn't change often.)
+
+  // find the asset, this is in sites folder
+  // open the file
+  // perform the callback on the opened file
+  var file = archive.paths.archivedSites + '/' + asset;
+  fs.readFile(file, function(err, data) {
+    callback(res, data);
+  });
+
 };
 
 // As you progress, keep thinking about what helper functions you can put here!
