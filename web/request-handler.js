@@ -33,5 +33,11 @@ var responses = {
 };
 
 exports.handleRequest = function (req, res) {
-  responses.GET(req, res);
+  var response = responses[req.method];
+  if (response) {
+    response(req, res);
+    console.log(response);
+  } else {
+    sendResponse(res, '', 404);
+  }
 };
